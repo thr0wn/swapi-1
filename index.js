@@ -36,7 +36,7 @@ app.use(async function disableCorsMiddleware (ctx, next) {
 })
 
 // Create the router instance.
-const specifiedPort = process.env.SWAPI_PORT
+const specifiedPort = process.env.PORT || process.env.SWAPI_PORT || 8080
 const router = new Router()
 
 // Add a root route that provides information about the service.
