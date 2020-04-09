@@ -6,6 +6,11 @@ const pkg = require('./package.json')
 
 // Import the JSON data copied from http://github.com/phalt/swapi.
 const people = require('./data/people.json')
+const starships = require('./data/starships.json')
+const planets = require('./data/planets.json')
+const species = require('./data/species.json')
+const vehicles = require('./data/vehicles.json')
+const films = require('./data/films.json')
 
 // Create the Koa app instance.
 const app = new Koa()
@@ -45,6 +50,32 @@ router.add('/', ctx => {
 
 // Add a route handler that returns 10 people per page.
 router.add('/api/people', (ctx, { url }) => {
+  const page = url.searchParams.get('page') || 1
+  const peopleSlice = people.slice((page - 1) * 10, page * 10)
+    .map(p => ({ pk: p.pk, ...p.fields }))
+    .map(p => {
+      p.starships = starships
+        .filter(s => s.fields.pilots.some(pilotPk => pilotPk === p.pk))
+        .map(s => s.fields)
+      p.vehicles = vehicles
+        .filter(v => v.fields.pilots.some(pilotPk => pilotPk === p.pk))
+        .map(s => s.fields)
+      p.homeworldDetails = planets.find(planet => planet.pk === p.homeworld).fields
+      p.specieDetails = (species
+        .find(s => s.fields.people.some(charPk => charPk === p.pk)) || {}).fields
+      p.films = films
+        .filter(s => s.fields.characters.some(charPk => charPk === p.pk))
+        .map(s => s.fields)
+      return p
+    })
+
+  ctx.body = {
+    count: people.length,
+    results: peopleSlice
+  }
+})
+
+router.add('/api/starships/:id', (ctx, { url }) => {
   const page = url.searchParams.get('page') || 1
   ctx.body = {
     count: people.length,
