@@ -50,8 +50,7 @@ router.get('/', ctx => {
 
 // Add a route handler that returns 10 people per page.
 router.get('/api/people', (ctx) => {
-  const page = ctx.query.page || 1
-  const peopleSlice = people.slice((page - 1) * 10, page * 10)
+  const peopleSlice = people
     .map(p => ({ pk: p.pk, ...p.fields }))
     .map(p => {
       p.starships = starships
