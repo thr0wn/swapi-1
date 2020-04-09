@@ -1,7 +1,7 @@
 const Koa = require('koa')
 const json = require('koa-json')
 const { print, chalk: { yellow } } = require('@ianwalter/print')
-const Router = require('@ianwalter/router')
+const Router = require('koa-router')
 const pkg = require('./package.json')
 
 // Import the JSON data copied from http://github.com/phalt/swapi.
@@ -37,10 +37,10 @@ app.use(async function disableCorsMiddleware (ctx, next) {
 
 // Create the router instance.
 const specifiedPort = process.env.SWAPI_PORT
-const router = new Router(`http://localhost:${specifiedPort || 3000}`)
+const router = new Router()
 
 // Add a root route that provides information about the service.
-router.add('/', ctx => {
+router.get('/', ctx => {
   ctx.body = {
     name: pkg.name,
     description: pkg.description,
@@ -49,8 +49,8 @@ router.add('/', ctx => {
 })
 
 // Add a route handler that returns 10 people per page.
-router.add('/api/people', (ctx, { url }) => {
-  const page = url.searchParams.get('page') || 1
+router.get('/api/people', (ctx) => {
+  const page = ctx.query.page || 1
   const peopleSlice = people.slice((page - 1) * 10, page * 10)
     .map(p => ({ pk: p.pk, ...p.fields }))
     .map(p => {
@@ -75,21 +75,13 @@ router.add('/api/people', (ctx, { url }) => {
   }
 })
 
-router.add('/api/starships/:id', (ctx, { url }) => {
-  const page = url.searchParams.get('page') || 1
-  ctx.body = {
-    count: people.length,
-    results: people.slice((page - 1) * 10, page * 10).map(p => p.fields)
-  }
-})
-
 // Add a 404 Not Found handler that is executed when no routes match.
-function notFoundHandler (ctx) {
-  ctx.status = 404
-}
+// function notFoundHandler (ctx) {
+//   ctx.status = 404
+// }
 
 // Handle the request by allowing the router to route it to a handler.
-app.use(ctx => router.match(ctx, notFoundHandler))
+app.use(router.routes())
 
 // Start listening on the specified (or randomized) port.
 const server = app.listen(specifiedPort)
